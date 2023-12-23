@@ -101,6 +101,7 @@ Shader "Unlit/NewUnlitShader"
                     col.rgb = n;
                 }
                 //col.rgb = rd;
+                //col = tex2D(_MainTex, i.uv);
                 return col;
             }
             ENDCG

@@ -3,6 +3,18 @@ Shader "Unlit/NewUnlitShader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _t ("Time", Float) = 0
+        _Range ("Range", Float) = 1 //This is a scaler for external controls
+        
+        _TimeTrans ("Time Transform", Vector) = (1,1,1)
+        _TimeRot ("Time Rotate", Vector) = (1,1,1)
+        _cp1 ("Control Point 1", Vector) = (1,1,1) //This is control point 1. This will be attached to one of the hands
+        _Mirror ("Mirror Enable", Vector) = (1,1,1)
+        _Fractal ("Fractal Enable", Int) = 1
+        _Trans ("Transform", Vector) = (0.25,0.5,.25)
+        _Rot ("Rotate", Vector) = (1,0,0)
+        _Twist ("Twist", Vector) = (1,0,0)
+
     }
     SubShader
     {
@@ -38,16 +50,16 @@ Shader "Unlit/NewUnlitShader"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            float _t =0;
-            float Range;//This is a scaler for external controls
-            float3 TimeTrans = float3(1,1,1);
-            float3 TimeRot = 0.0;
-            float3 cp1;//This is control point 1. This will be attached to one of the hands
-            int3 Mirror = int3(1,1,1);
-            int Fractal = 1;
-            float3 Trans = float3(0.5,1,1);
-            float3 Rot = float3(1,0,0);;
-            float3 Twist;
+            float _t;
+            float _Range;//This is a scaler for external controls
+            float3 _TimeTrans;
+            float3 _TimeRot;
+            float3 _cp1;//This is control point 1. This will be attached to one of the hands
+            int3 _Mirror;
+            int _Fractal;
+            float3 _Trans;
+            float3 _Rot;
+            float3 _Twist;
 
             v2f vert (appdata v)
             {
@@ -67,8 +79,8 @@ Shader "Unlit/NewUnlitShader"
 
             float2x2 rotate(float a)
             {
-                float c = cos(a),
-                s = sin(a);
+                float c = cos(a);
+                float s = sin(a);
                 return float2x2(c, -s, s, c);
             }   
 
@@ -99,15 +111,15 @@ Shader "Unlit/NewUnlitShader"
             }
 
             float3 spaceTransform(float3 p){
-                //p.yz *= rotate(p.y*p.z*TwistY*sin(_t*0.25)); //Twist
+                //p.yz *= rotate(p.y*p.z*_Twist.y*sin(_t*0.25)); //Twist
                 //p.x = rotate(sin(_t*0.5));
                 //p.y = rotate(sin(_t*0.5));
-                p.x += Trans.x;
+                p.x += _Trans.x;
                 return p;
             }
 
             //float3 objectTransform(float3 p){
-            //    p.xz *= rotate(p.y*TwistY*(20.*sin(_t*1.))); //Twist
+            //    p.xz *= rotate(p.y*_Twist.y*(20.*sin(_t*1.))); //Twist
             //    p.yx *= rotate(sin(_t*0.5));
             //    return p;
             //}
@@ -126,24 +138,27 @@ Shader "Unlit/NewUnlitShader"
                 return length(p)-sphere;
             }
 
-            float3 fractal(float3 p){
-                for (int i = 0; i < FRACT_STEPS ; i++){
-                    if(Mirror.x == 1) p.x = abs(p.x); //Mirror X
-                    if(Mirror.y == 1) p.y = abs(p.y); //Mirror Y
-                    if(Mirror.z == 1) p.z = abs(p.z); //Mirror Z
+            float3 Fractalize(float3 p){
+                for (int i = 0; i < FRACT_STEPS ; i++)
+                {
+                    if(_Mirror.x == 1) p.x = abs(p.x); //Mirror X
+                    if(_Mirror.y == 1) p.y = abs(p.y); //Mirror Y
+                    if(_Mirror.z == 1) p.z = abs(p.z); //Mirror Z
+                    
+                    p.x -= _Trans.x
+                        //+_cp1.x*_Range
+                    //    +_TimeTrans.x*sin(_t*0.2)
+                    ;
+                    p.y -= _Trans.y+_cp1.y*_Range
+                    //    +_cp1.y*_Range
+                    //    +_TimeTrans.y*cos(_t*0.1)
+                    ;
+                    p.z -= _Trans.z;
 
-                    p.x -= Trans.x
-                    +cp1.x*Range
-                    +TimeTrans.x*sin(_t*0.2);
-                    p.y -= Trans.y+cp1.y*Range
-                    +cp1.y*Range
-                    +TimeTrans.y*cos(_t*0.1);;
-                    p.z -= Trans.z;
-
-                    p.x *= rotate(Rot.x+sin(_t*0.2)*TimeRot.x);
-                    p.y *= rotate(Rot.y+sin(_t*0.2)*TimeRot.y);
-                    p.z *= rotate(Rot.z+cos(_t*0.1)*TimeRot.z);
-                    p.y *= rotate(p.y*Twist.y); //Twist
+                    p.xy = mul(p.xy,rotate(_Rot.x));
+                    p.xz =  mul(p.xz,rotate(_Rot.y));
+                    p.yz =  mul(p.yz,rotate(_Rot.z));
+                    p.yz =  mul(p.yz,rotate(p.y*_Twist.y)); //Twist
 
                     return p;
                 }
@@ -151,28 +166,34 @@ Shader "Unlit/NewUnlitShader"
 
             float GetDist (float3 p)
             {
-                float d = 1.;
-                if (Fractal == 1) 
+                float d = 100.;
+                if (_Fractal == 1)
                 {
-                    p = float3(10,10,10);
-                    //p = fractal(p);
+                    p = Fractalize(p);
                 }
-                d = sphereSDF(p, 0.15);
-                d = recSDF(p, float3(0.25,0.5,0.5));
+                float sphere1 = sphereSDF(p, 0.1);
+                float rec1 = recSDF(p, float3(.125,.125,.125));
+
+                //d = min(d, rec1);
+                d = opSmoothUnion(d, rec1, 1.);
+                d = opSmoothUnion(d, sphere1, .25);
+
 
                 return d;
             }
             
             float Raymarch (float3 ro, float3 rd) 
             {
-                float dO = 0;
+                float3 dO = 0; //x = distance ray has traveled, y = Iterations to hit, z = Closest distance to surface
                 float dS;
                 for (int i=0; i < MAX_STEPS; i++)
                 {
-                    float3 p = ro + dO * rd;
+                    float3 p = ro + dO.x * rd;
                     dS = GetDist(p);
-                    dO += dS;
-                    if(dS<SURF_DIST || dO>MAX_DIST) 
+                    dO.x += dS;
+                    dO.z = min(dS, dO.z);
+			        dO.y = float(i);
+                    if(dS<SURF_DIST || dO.x>MAX_DIST) 
                     {
                         break;
                     }

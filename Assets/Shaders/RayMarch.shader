@@ -23,15 +23,16 @@ Shader "Unlit/NewUnlitShader"
 
         Pass
         {
+            Cull Off
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
 
             #include "UnityCG.cginc"
-            #define MAX_STEPS 100
+            #define MAX_STEPS 125
             #define MAX_DIST 100
             #define SURF_DIST 1e-3
-            #define FRACT_STEPS 20
+            #define FRACT_STEPS 10
             #define PI 3.14159
 
             struct appdata
@@ -160,8 +161,10 @@ Shader "Unlit/NewUnlitShader"
                     p.yz =  mul(p.yz,rotate(_Rot.z));
                     p.yz =  mul(p.yz,rotate(p.y*_Twist.y)); //Twist
 
-                    return p;
+
                 }
+
+                return p;
             }
 
             float GetDist (float3 p)

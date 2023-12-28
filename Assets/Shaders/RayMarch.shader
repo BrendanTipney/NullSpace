@@ -1,5 +1,6 @@
 Shader "Unlit/NewUnlitShader"
 {
+
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
@@ -25,15 +26,20 @@ Shader "Unlit/NewUnlitShader"
         {
             Cull Off
             CGPROGRAM
+            //#include "Packages/com.meta.xr.depthapi.urp/Shaders/EnvironmentOcclusionURP.hlsl"
             #pragma vertex vert
             #pragma fragment frag
+            // DepthAPI Environment Occlusion
+            //#pragma multi_compile _ HARD_OCCLUSION SOFT_OCCLUSION
 
             #include "UnityCG.cginc"
-            #define MAX_STEPS 125
-            #define MAX_DIST 100
+            #define MAX_STEPS 40
+            #define MAX_DIST 5
             #define SURF_DIST 1e-3
-            #define FRACT_STEPS 10
+            #define FRACT_STEPS 5
             #define PI 3.14159
+
+
 
             struct appdata
             {

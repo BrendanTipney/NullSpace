@@ -79,15 +79,15 @@ Material:
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1
-    - _t: 11.844663
+    - _t: 2.2144258
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Mirror: {r: 1, g: 1, b: 1, a: 1}
-    - _Rot: {r: 1.45, g: 0, b: 1, a: 1}
+    - _Rot: {r: 1.35, g: 1.11, b: 1.84, a: 1}
     - _TimeRot: {r: 1, g: 1, b: 1, a: 1}
     - _TimeTrans: {r: 1, g: 1, b: 1, a: 1}
-    - _Trans: {r: 0.58, g: -0.65, b: 0.17, a: 1}
+    - _Trans: {r: 0.48, g: -0.52, b: 0.24, a: 1}
     - _Twist: {r: 0, g: 0, b: 0, a: 1}
     - _cp1: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

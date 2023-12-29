@@ -1,11 +1,12 @@
-Shader "Unlit/NewUnlitShader"
+Shader "NullShaders/RayMarch"
 {
 
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
         _t ("Time", Float) = 0
-        _Range ("Range", Float) = 1 //This is a scaler for external controls
+        _txRange ("Transform Range", Float) = 1 //This is a scaler for external controls
+        _rotRange ("Rotate Range", Float) = 0.0087 //This is a scaler for external controls
         
         _TimeTrans ("Time Transform", Vector) = (1,1,1)
         _TimeRot ("Time Rotate", Vector) = (1,1,1)
@@ -33,8 +34,8 @@ Shader "Unlit/NewUnlitShader"
             //#pragma multi_compile _ HARD_OCCLUSION SOFT_OCCLUSION
 
             #include "UnityCG.cginc"
-            #define MAX_STEPS 40
-            #define MAX_DIST 5
+            #define MAX_STEPS 20
+            #define MAX_DIST 4
             #define SURF_DIST 1e-3
             #define FRACT_STEPS 5
             #define PI 3.14159
@@ -62,10 +63,12 @@ Shader "Unlit/NewUnlitShader"
             sampler2D _MainTex;
             float4 _MainTex_ST;
             float _t;
-            float _Range;//This is a scaler for external controls
+            float _txRange;//This is a scaler for external controls
+            float _rotRange;//This is a scaler for external controls
             float3 _TimeTrans;
             float3 _TimeRot;
             float3 _cp1;//This is control point 1. This will be attached to one of the hands
+            float3 _cp2;
             int3 _Mirror;
             int _Fractal;
             float3 _Trans;
@@ -162,18 +165,26 @@ Shader "Unlit/NewUnlitShader"
                     if(_Mirror.z == 1) p.z = abs(p.z); //Mirror Z
                     
                     p.x -= _Trans.x
-                        //+_cp1.x*_Range
+                    //+_cp1.x*_txRange
                     //    +_TimeTrans.x*sin(_t*0.2)
                     ;
-                    p.y -= _Trans.y+_cp1.y*_Range
-                    //    +_cp1.y*_Range
+                    p.y -= _Trans.y
+                    //+_cp1.y*_txRange
                     //    +_TimeTrans.y*cos(_t*0.1)
                     ;
-                    p.z -= _Trans.z;
+                    p.z -= _Trans.z
+                    //+_cp1.z*_txRange
+                    ;
 
-                    p.xy = mul(p.xy,rotate(_Rot.x));
-                    p.xz =  mul(p.xz,rotate(_Rot.y));
-                    p.yz =  mul(p.yz,rotate(_Rot.z));
+                    p.xy = mul(p.xy,rotate(_Rot.x
+                    //+_cp2.y*_rotRange
+                    ));
+                    p.xz =  mul(p.xz,rotate(_Rot.y
+                    //+_cp2.x*_rotRange
+                    ));
+                    p.yz =  mul(p.yz,rotate(_Rot.z
+                    //+_cp2.z*_rotRange
+                    ));
                     p.yz =  mul(p.yz,rotate(p.y*_Twist.y)); //Twist
 
 
@@ -190,7 +201,7 @@ Shader "Unlit/NewUnlitShader"
                     p = Fractalize(p);
                 }
                 float sphere1 = sphereSDF(p, 0.1);
-                float rec1 = recSDF(p, float3(.125,.125,.125));
+                float rec1 = recSDF(p, _cp1);
 
                 //d = min(d, rec1);
                 d = opSmoothUnion(d, rec1, 1.);

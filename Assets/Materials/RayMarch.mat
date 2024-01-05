@@ -79,18 +79,22 @@ Material:
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1
-    - _rotRange: 0.0087
-    - _t: 29.75557
-    - _txRange: 1
+    - _rotRange: 1
+    - _t: 8.926274
+    - _txRange: 0.1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _CubeSize: {r: 0.05, g: 0.05, b: 0.05, a: 0.05}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Mirror: {r: 1, g: 1, b: 1, a: 1}
-    - _Rot: {r: 1.54, g: 1.11, b: 1.84, a: 1}
+    - _Rot: {r: 0, g: 0, b: 0, a: 0}
     - _TimeRot: {r: 1, g: 1, b: 1, a: 1}
     - _TimeTrans: {r: 1, g: 1, b: 1, a: 1}
-    - _Trans: {r: 0.29, g: 0.6, b: 0.24, a: 1}
-    - _Twist: {r: 0, g: 0, b: 0, a: 1}
+    - _Trans: {r: 0, g: 0, b: 0, a: 0}
+    - _Twist: {r: 0, g: 0, b: 0, a: 0}
     - _cp1: {r: -0, g: 0, b: 0, a: 0}
+    - _handPosDiff: {r: 1, g: 1, b: 1, a: 1}
+    - _lhp: {r: 1, g: 1, b: 1, a: 1}
+    - _lhr: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

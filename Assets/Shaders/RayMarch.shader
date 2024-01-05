@@ -10,13 +10,15 @@ Shader "NullShaders/RayMarch"
         
         _TimeTrans ("Time Transform", Vector) = (1,1,1)
         _TimeRot ("Time Rotate", Vector) = (1,1,1)
-        _cp1 ("Control Point 1", Vector) = (1,1,1) //This is control point 1. This will be attached to one of the hands
+        _lhp ("Left Hand Position", Vector) = (1,1,1)
+        _lhr ("Left Hand Rotation", Vector) = (1,1,1)
+        _handPosDiff ("Hand Postition diffrence", Vector) = (1,1,1)
         _Mirror ("Mirror Enable", Vector) = (1,1,1)
         _Fractal ("Fractal Enable", Int) = 1
-        _Trans ("Transform", Vector) = (0.25,0.5,.25)
-        _Rot ("Rotate", Vector) = (1,0,0)
-        _Twist ("Twist", Vector) = (1,0,0)
-
+        _Trans ("Transform", Vector) = (0.0,0.0,.0)
+        _Rot ("Rotate", Vector) = (0,0,0)
+        _Twist ("Twist", Vector) = (0,0,0)
+        _CubeSize ("Cube Size", Vector) = (0.1,0.1,0.1)
     }
     SubShader
     {
@@ -67,13 +69,17 @@ Shader "NullShaders/RayMarch"
             float _rotRange;//This is a scaler for external controls
             float3 _TimeTrans;
             float3 _TimeRot;
-            float3 _cp1;//This is control point 1. This will be attached to one of the hands
-            float3 _cp2;
+            float3 _lhp;//This is control point 1. This will be attached to one of the hands
+            float3 _lhr;
+            float3 _handPosDiff;
             int3 _Mirror;
             int _Fractal;
             float3 _Trans;
             float3 _Rot;
             float3 _Twist;
+            float3 _CubeSize;
+            float3 _CubeControlTransform;
+            float3 _CubeControlRotation;
 
             v2f vert (appdata v)
             {
@@ -109,11 +115,11 @@ Shader "NullShaders/RayMarch"
                 return p;
             }
 
-            //float3 hs(float3 c, float s){
-            //    s*= 2.*PI;//This lets .0 to 1. be 0 to 360 rotation of the color wheel
-            //    float3 m=float3(cos(s),s=sin(s)*.5774,-s);
-            //    return c*float3x3(m+=(1.-m.x)/3.,m.zxy,m.yzx);
-            //}
+            float3 hs(float3 c, float s){
+                s*= 2.*PI;//This lets .0 to 1. be 0 to 360 rotation of the color wheel
+                float3 m=float3(cos(s),s=sin(s)*.5774,-s);
+                return mul(c,float3x3(m+=(1.-m.x)/3.,m.zxy,m.yzx));
+            }
 
             float opSmoothUnion( float d1, float d2, float k ){
                 float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
@@ -137,11 +143,12 @@ Shader "NullShaders/RayMarch"
                 return p;
             }
 
-            //float3 objectTransform(float3 p){
-            //    p.xz *= rotate(p.y*_Twist.y*(20.*sin(_t*1.))); //Twist
-            //    p.yx *= rotate(sin(_t*0.5));
-            //    return p;
-            //}
+            float3 objectRotate(float3 p, float angle){
+                    p.xy = mul(p.xy,angle);
+                    p.xz =  mul(p.xz,angle);
+                    p.yz =  mul(p.yz,angle);
+                    return p;
+            }
 
             //Shaping Functions
             float recSDF(float3 p, float rec){
@@ -165,29 +172,30 @@ Shader "NullShaders/RayMarch"
                     if(_Mirror.z == 1) p.z = abs(p.z); //Mirror Z
                     
                     p.x -= _Trans.x
-                    //+_cp1.x*_txRange
-                    //    +_TimeTrans.x*sin(_t*0.2)
+                    +_handPosDiff.x
+                    *_txRange
+                    //+_TimeTrans.x*sin(_t*0.2)
                     ;
                     p.y -= _Trans.y
-                    //+_cp1.y*_txRange
-                    //    +_TimeTrans.y*cos(_t*0.1)
+                    +_handPosDiff.y
+                    *_txRange
+                    //+_TimeTrans.y*cos(_t*0.1)
                     ;
                     p.z -= _Trans.z
-                    //+_cp1.z*_txRange
+                    +_handPosDiff.z
+                    *_txRange
                     ;
 
                     p.xy = mul(p.xy,rotate(_Rot.x
-                    //+_cp2.y*_rotRange
+                    +_lhr.y*_rotRange
                     ));
                     p.xz =  mul(p.xz,rotate(_Rot.y
-                    //+_cp2.x*_rotRange
+                    +_lhr.x*_rotRange
                     ));
                     p.yz =  mul(p.yz,rotate(_Rot.z
-                    //+_cp2.z*_rotRange
+                    +_lhr.z*_rotRange
                     ));
                     p.yz =  mul(p.yz,rotate(p.y*_Twist.y)); //Twist
-
-
                 }
 
                 return p;
@@ -201,17 +209,19 @@ Shader "NullShaders/RayMarch"
                     p = Fractalize(p);
                 }
                 float sphere1 = sphereSDF(p, 0.1);
-                float rec1 = recSDF(p, _cp1);
+                float rec1 = recSDF(p+_CubeControlTransform, _CubeSize);
+                //float rec1 = recSDF(p, _CubeSize);
+
 
                 //d = min(d, rec1);
                 d = opSmoothUnion(d, rec1, 1.);
-                d = opSmoothUnion(d, sphere1, .25);
+                //d = opSmoothUnion(d, sphere1, .125);
 
 
                 return d;
             }
             
-            float Raymarch (float3 ro, float3 rd) 
+            float3 Raymarch (float3 ro, float3 rd) 
             {
                 float3 dO = 0; //x = distance ray has traveled, y = Iterations to hit, z = Closest distance to surface
                 float dS;
@@ -248,16 +258,22 @@ Shader "NullShaders/RayMarch"
                 float3 ro = i.ro;
                 float3 rd = normalize(i.hitPos-ro);
 
-                float d = Raymarch(ro, rd);
+                float3 d = Raymarch(ro, rd);
                 fixed4 col = 0;
-                if(d > MAX_DIST)
+                if(d.x > MAX_DIST)
                 {
                     discard;
                 } else {
-                    col = 1;
-                    float3 p = ro + rd * d;
+                    col = 0;
+                    float3 p = ro + rd * d.x;
                     float3 n = GetNormal(p);
-                    col.rgb = n;
+
+                    col.r = d.r*.25;
+                    col.g = d.g*.0125;
+                    col.b = d.b;
+                    col.rgb += n*.25;
+                    col.a = 1.;
+                    col.rgb = hs(col, .4);
                 }
                 //col.rgb = rd;
                 //col = tex2D(_MainTex, i.uv);

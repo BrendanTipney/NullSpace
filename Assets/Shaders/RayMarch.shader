@@ -12,6 +12,8 @@ Shader "NullShaders/RayMarch"
         _TimeRot ("Time Rotate", Vector) = (1,1,1)
         _lhp ("Left Hand Position", Vector) = (1,1,1)
         _lhr ("Left Hand Rotation", Vector) = (1,1,1)
+        _rhp ("Right Hand Position", Vector) = (1,1,1)
+        _rhr ("Right Hand Rotation", Vector) = (1,1,1)
         _handPosDiff ("Hand Postition diffrence", Vector) = (1,1,1)
         _Mirror ("Mirror Enable", Vector) = (1,1,1)
         _Fractal ("Fractal Enable", Int) = 1
@@ -172,17 +174,17 @@ Shader "NullShaders/RayMarch"
                     if(_Mirror.z == 1) p.z = abs(p.z); //Mirror Z
                     
                     p.x -= _Trans.x
-                    +_handPosDiff.x
+                    +_lhp.x
                     *_txRange
                     //+_TimeTrans.x*sin(_t*0.2)
                     ;
                     p.y -= _Trans.y
-                    +_handPosDiff.y
+                    +_lhp.y
                     *_txRange
                     //+_TimeTrans.y*cos(_t*0.1)
                     ;
                     p.z -= _Trans.z
-                    +_handPosDiff.z
+                    +_lhp.z
                     *_txRange
                     ;
 

@@ -36,7 +36,6 @@ public class ShaderPipe : MonoBehaviour
         cubeOffset = controlCube.transform;
         lHandLast = this.transform;
         rHandLast = this.transform;
-
     }
 
 

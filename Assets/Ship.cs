@@ -7,6 +7,7 @@ public class Ship : MonoBehaviour
     private Material mat;
     private HandManager hm;
     public Weapon weapon;
+    public float health = 3;
 
     void Start()
     {
@@ -17,9 +18,9 @@ public class Ship : MonoBehaviour
 
     void Update()
     {
-        if(hm.lHandTracking && hm.rHandTracking)
-        {
+       // if(hm.lHandTracking && hm.rHandTracking)
+       // {
             transform.SetPositionAndRotation(hm.handsCenter.position, hm.handsCenter.rotation);
-        }
+       // }
     }
 }

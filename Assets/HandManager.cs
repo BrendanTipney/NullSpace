@@ -46,14 +46,16 @@ public class HandManager : MonoBehaviour
             rHandLast = rHand.transform;
             rHandTracking = true;
         } else {
-            rHandTracking = true;
+            rHandTracking = false;
         }
+
         if(lHand.IsDataHighConfidence & rHand.IsDataHighConfidence)
         {
             Vector3 handPosRelative = rHand.transform.position-lHand.transform.position;
             Vector3 handPosRelativeLast = rHandLast.position-lHandLast.position;
-            handDist =  Vector3.Distance(lHand.transform.position, rHand.transform.position);
             handPosRelativeSmoothed = Vector3.Lerp(handPosRelativeLast, handPosRelative, smoothing);
+
+            handDist =  Vector3.Distance(lHand.transform.position, rHand.transform.position);
 
             handsCenter.position = lhandTrans.position + handPosRelative * 0.5f;
             handsCenter.rotation = Quaternion.Inverse(rHand.transform.rotation) * lHand.transform.rotation;
